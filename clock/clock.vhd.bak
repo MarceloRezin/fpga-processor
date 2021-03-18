@@ -1,0 +1,12 @@
+-- Divisor de clock
+-- Autor: Marcelo Rezin
+-- Data: 10/02/2021
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity clock is
+	port (
+		clk	:	in	
+	);
+end clock;
