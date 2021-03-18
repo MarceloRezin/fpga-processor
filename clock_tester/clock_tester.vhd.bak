@@ -1,0 +1,116 @@
+-- Utilitario para testar o temporizador na placa
+-- Autor: Marcelo Rezin
+-- Data: 14/05/2020
+
+-- Libs
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use work.memoria_rampa.all;
+
+-- Entidade
+entity temporizador_tester is
+    port(
+        clk_50MHZ   :   in  std_logic;
+        iniciar     :   in  std_logic;
+   
+        dezena      :   out std_logic_vector(6 downto 0);
+        unidade     :   out std_logic_vector(6 downto 0);
+        alteracao   :   out std_logic;
+        fim         :   out std_logic
+    );
+end temporizador_tester;
+
+architecture main of temporizador_tester is
+
+    component temporizador is
+        port(
+            clk_1MHZ            :   in std_logic;
+            iniciar             :   in std_logic; --Um pulso indica que o temporizador deve iniciar
+            rampas              :   in rampa;
+            
+            set_point           :   out std_logic_vector(11 downto 0);
+            alteracao_set_point :   out std_logic; --Da um pulso sempre que o set point foi alterado
+            fim                 :   out std_logic --Da um pulso quando as rampas terminarem
+        );
+    end component temporizador;
+
+    component divisor_clock is
+        port(
+            clk     :   in  std_logic;
+            divisor :   in  integer range 0 to 50000000 :=  0; -- divisão máxima de 1hz (De acordo com a placa utilizada). Dá pra usar divisores em cascata  
+            
+            out_clk :   out std_logic
+        );
+    end component divisor_clock;
+
+    component sete_seg_display is
+        port(
+            numero      :   in  integer range 0 to 9;
+            out_display :   out std_logic_vector(6 downto 0)
+        );
+    end component sete_seg_display;
+
+    constant prescaler      :   integer range 0 to 50           :=  50;
+    signal  clk_1MHZ        :   std_logic                       :=  '0';
+
+    signal  iniciar_tmp     :   std_logic                       :=  '0';
+    signal  not_iniciar     :   std_logic                       :=  '0';
+
+    signal  dezena_tmp      :   integer range 0 to 9            :=  0;
+    signal  unidade_tmp     :   integer range 0 to 9            :=  0;
+    
+    constant p1             :   parametros                      :=  ("0000000111110", "0000000000100"); --62°C, 4s
+    constant p2             :   parametros                      :=  ("0000000101101", "0000000111100"); --45°C, 60s
+    constant p3             :   parametros                      :=  ("0000000001100", "0001001011000"); --12°C, 600s
+    constant p4             :   parametros                      :=  ("0000000000000", "0000000000000"); 
+    constant p5             :   parametros                      :=  ("0000000000000", "0000000000000"); 
+    constant p6             :   parametros                      :=  ("0000000000000", "0000000000000"); 
+    constant p7             :   parametros                      :=  ("0000000000000", "0000000000000"); 
+    constant p8             :   parametros                      :=  ("0000000000000", "0000000000000"); 
+    constant p9             :   parametros                      :=  ("0000000000000", "0000000000000"); 
+    constant rampas         :   rampa                           := (p1, p2, p3, p4, p5, p6, p7, p8, p9);
+
+    signal  temperatura_tmp :   std_logic_vector(11 downto 0)   :=  (others => '0');
+
+begin
+
+    divisor_50x     :   divisor_clock port map(clk_50MHZ, prescaler, clk_1MHZ);
+    tmpr            :   temporizador port map(clk_1MHZ, iniciar_tmp, rampas, temperatura_tmp, alteracao, fim);
+
+    display_dezena  :   sete_seg_display port map(dezena_tmp, dezena);
+    display_unidade :   sete_seg_display port map(unidade_tmp, unidade);
+
+    not_iniciar <=  not iniciar;
+
+    process(clk_1MHZ)
+
+        variable update_display  :   integer range 0 to 200000   :=  0;
+        variable temperatura_int    :   integer range 0 to 100   :=  0;
+
+    begin
+        if rising_edge(clk_1MHZ) then
+
+            update_display :=   update_display + 1;
+
+            if update_display = 200000 then
+
+                temperatura_int :=  to_integer(unsigned(temperatura_tmp));
+
+                dezena_tmp      <=  temperatura_int / 10;
+                unidade_tmp     <=  temperatura_int rem 10;
+
+                update_display  :=  0;
+            end if;
+
+        end if;
+    end process;
+    
+    process(not_iniciar)
+    begin
+        if rising_edge(not_iniciar) then
+            iniciar_tmp   <=   '1';
+        end if;
+    end process;
+
+end main;
