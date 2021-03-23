@@ -1,0 +1,32 @@
+-- Libs
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+-- Entidade
+entity tri_state_buffer_tb is
+end tri_state_buffer_tb;
+
+architecture sim of tri_state_buffer_tb is
+    
+    signal  clk           :   std_logic               :=  '0';
+	 signal	bus_io		:	std_logic_vector(7 downto 0)	:= (others => '0');
+	 signal  inc	:   std_logic	:=  '1';
+	 signal  jmp	:   std_logic	:=  '0';
+    signal  pc_out	:   std_logic	:=  '1';
+	 signal  reset	:   std_logic	:=  '0';
+
+begin
+
+    DUT :   entity work.program_counter(main) port map(clk, bus_io, inc, jmp, pc_out, reset);
+
+    clk   <=  not clk after 2 ns; -- 50MHZ 50% duty cicle
+--	 manual_clk <=  not manual_clk after 10 ns;
+
+	inc	<=	'0' after 20 ns;
+	pc_out <= '0' after 40 ns;
+	jmp	<= '1' after 50 ns;
+	bus_io <= "00001111" after 60 ns;
+	 
+
+end sim;
