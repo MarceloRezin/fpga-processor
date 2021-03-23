@@ -1,0 +1,56 @@
+-- Implementa um divisor de clock com a possibilidade de pulsos manuais
+-- Autor: Marcelo Rezin
+-- Data: 20/03/2021
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity tri_state_buffer is
+	port (
+		dir		:	in		std_logic;  -- 0 entrada, 1 saida
+		en		:	in		std_logic;
+		
+		
+		inc		:	in		std_logic;
+		jmp		:	in		std_logic;
+		pc_out	:	in		std_logic;
+		reset		:	in		std_logic;
+		
+		out_bus  :	inout	std_logic_vector(7 downto 0)
+	);
+end tri_state_buffer;
+
+architecture main of tri_state_buffer is
+
+	signal	contagem	:   unsigned(3 downto 0)	:=	(others => '0'); -- 4 bits para PC
+
+begin
+
+    process(clk)
+    begin
+
+        if rising_edge(clk) then
+			
+			if inc = '1' then
+
+				contagem	<=	contagem + "0001";
+
+			end if;
+			
+			if jmp = '1' then
+
+				contagem	<=	resize(unsigned(bus_io), contagem'length);
+
+			elsif pc_out = '1' then
+			
+				bus_io	<= (others => '0');
+				bus_io(3 downto 0)	<= std_logic_vector(contagem);
+			
+			end if;
+			
+        end if;
+
+    end process;
+
+end main;

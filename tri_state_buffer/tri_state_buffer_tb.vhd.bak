@@ -1,0 +1,28 @@
+-- Libs
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+-- Entidade
+entity tri_state_buffer_tb is
+end tri_state_buffer_tb;
+
+architecture sim of tri_state_buffer_tb is
+    
+	signal  	dir           :   std_logic               :=  '0';
+	signal	send		: std_logic_vector(7 downto 0);
+	signal	read_out	:	std_logic_vector(7 downto 0);	
+	signal	out_bus  :	std_logic_vector(7 downto 0);
+
+begin
+
+    DUT :   entity work.tri_state_buffer(main) port map(dir, send, read_out, out_bus);
+	 
+	 out_bus	<=	"10101010" after 1 ns;
+	 
+	 dir	<=	'1' after 5 ns;	 
+
+	 send	<= "11100011";
+	 
+
+end sim;
