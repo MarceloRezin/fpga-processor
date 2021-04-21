@@ -1,0 +1,47 @@
+-- Implementa uma memoria ram com 64 bits de capacidade (16x8) e um buffer tri-state
+-- Autor: Marcelo Rezin
+-- Data: 21/04/2021
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity random_access_memory is
+	port (
+		clk		:	in		std_logic;
+		bus_io	:	inout	std_logic_vector(7 downto 0);
+		
+		add		:	in		std_logic_vector(3 downto 0);
+		ram_in	:	in		std_logic;
+		ram_out	:	in		std_logic
+	);
+end random_access_memory;
+
+architecture main of random_access_memory is
+
+	type		ram_64b is array (0 to 15) of std_logic_vector(7 downto 0);
+
+	signal	memoria	:	ram_64b;
+
+begin
+
+	--Simula um buffer tri-state pra controlar a entrada e saida pelo barramento
+	bus_io	<=	memoria(to_integer(unsigned(add)))	when	ram_out = '1'	else
+					(others => 'Z');
+
+    process(clk)
+    begin
+
+        if rising_edge(clk) then
+			
+			if ram_in = '1' then
+
+				memoria(to_integer(unsigned(add)))	<=	bus_io;
+			
+			end if;
+			
+        end if;
+
+    end process;
+
+end main;
